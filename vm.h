@@ -3,33 +3,36 @@
 *
 *
 */
-#ifndef vm_h
-#define vm_h
+#ifndef VM_H
+#define VM_H
 #include <stdint.h>
 #define MEMORY_SIZE 65536
 
-typedef enum{
-    NONE = 0,
-    STACK_OVERFLOW = 1u << 1,
-    STACK_UNDERFLOW = 1u << 2
-}faults_t;
 
+//enum de stari (inspirat din y86-64 --csapp)
 typedef enum{
-    HALT = 0 ,
-    SHUTDOWN,
-    RUNNING
-}stare_t;
+    VM_AOK = 0,  
+    VM_HALT,
+    VM_ADDR,
+    VM_INS
+}vm_stare;
+
+
 
 typedef struct{
     uint8_t memory[MEMORY_SIZE];
+    uint16_t registers[15];
     uint16_t program_counter;
-    uint16_t stack_pointer;
     uint8_t zero_flag;
-    stare_t stare;
-    faults_t faults;
-}VM;
+    uint8_t sign_flag;
+    uint8_t overflow_flag;
+    vm_stare stare;
 
+}VM;
+/*
+ * Relicve de la prima idee care n avea sens 
 void vm_start(VM* vm);
-uint8_t vm_push(VM* vm, uint16_t valoare); 
-uint8_t vm_pop(VM* vm,uint16_t* valoare); 
+vm_stare vm_push(VM* vm, uint16_t valoare); 
+vm_stare vm_pop(VM* vm,uint16_t* valoare); 
+*/ 
 #endif
