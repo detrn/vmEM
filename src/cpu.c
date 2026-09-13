@@ -1,25 +1,34 @@
 #include "../include/cpu.h"
 #include "../include/vm.h"
 #include "../include/instructions.h"
+#include <sys/types.h>
 
 typedef uint8_t byte; 
 
 static vm_stare cpu_fetch(VM *vm, instruction_t* instruction);
-static void cpu_decode(VM*vm, instruction_t* instruction);
+static void cpu_decode(VM*vm, instruction_t* instruction,uint16_t* valA, uint16_t* valB);
 static void cpu_execute(VM*vm, instruction_t* instruction);
 static void cpu_memory(VM*vm, instruction_t* instruction);
 static void pc_update(VM*vm,instruction_t* instruction);
 static uint8_t valid_ifun(icode_t icode, uint8_t ifun);
 
 vm_stare cpu_step(VM* vm){
-    instruction_t instruction; 
-    return cpu_fetch(vm,&instruction);
-    //cpu_decode()
+    instruction_t instruction;
+    uint16_t valA=0,valB=0;
+    //cpu_fetch(): doc
+    if(cpu_fetch(vm,&instruction)!=VM_AOK){
+	return vm->stare;
+    };
+    //cpu_decode(): doc
+    
+    cpu_decode(vm,&instruction,&valA,&valB);
+
     //cpu_execute()
     //cpu_memory()
     //cpu_writeback()
     //cpu_pc_update()
-
+    vm->stare = VM_AOK;
+    return vm->stare;
 }
 
 static uint8_t valid_ifun(icode_t icode, uint8_t ifun){
@@ -168,5 +177,28 @@ static vm_stare cpu_fetch(VM* vm, instruction_t* instruction){
     instruction->valP = vm->program_counter + instruction_size;
     vm->stare = VM_AOK;
     return VM_AOK;
-}  
+} 
+
+static void cpu_decode(VM* vm, instruction_t* instruction,uint16_t* valA, uint16_t* valB){
+    register_t srcA, srcB;
+    switch(instruction->icode){
+	case RRMOVW:
+	case RMMOVW:
+	case MRMOVW:
+	case OPW:
+	case CMOVXX:
+	case PUSHW: 
+	    srcA = instruction->rA; 
+	    break;
+	case CALL: 
+	case RET:
+	case POPW:
+	    srcA = RSP;
+	default: 
+	    srcA = NO_REG;
+    }
+    switch(instruction->icode){
+    
+    }
+}
    

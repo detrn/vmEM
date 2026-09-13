@@ -21,7 +21,7 @@ typedef enum{
 
 typedef struct{
     uint8_t memory[MEMORY_SIZE];
-    uint16_t registers[15];
+    uint16_t registers[15]; //registerFile cum s ar zice 
     uint16_t program_counter;
     uint8_t zero_flag;
     uint8_t sign_flag;
