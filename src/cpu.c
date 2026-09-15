@@ -181,24 +181,46 @@ static vm_stare cpu_fetch(VM* vm, instruction_t* instruction){
 
 static void cpu_decode(VM* vm, instruction_t* instruction,uint16_t* valA, uint16_t* valB){
     register_t srcA, srcB;
+    //determinare srcA 
     switch(instruction->icode){
 	case RRMOVW:
 	case RMMOVW:
-	case MRMOVW:
 	case OPW:
 	case CMOVXX:
 	case PUSHW: 
-	    srcA = instruction->rA; 
+	    srcA = instruction->rA;
 	    break;
-	case CALL: 
-	case RET:
-	case POPW:
+	case MRMOVW:
+	    srcA = instruction->rB;
+	    break;
+	case POPW: 
 	    srcA = RSP;
 	default: 
 	    srcA = NO_REG;
     }
+    //determinare srcB
     switch(instruction->icode){
-    
+	case RRMOVW:
+	case RMMOVW:
+	case IRMOVW:
+	case OPW:
+	case CMOVXX:
+	    srcB = instruction -> rB;
+	    break;
+	case POPW:
+	case MRMOVW:
+	    srcB = instruction ->rA;
+	    break;
+	case CALL:
+	case PUSHW: 
+	case RET:
+	    srcB = RSP; 
+	    break;
+     	default: 
+	    srcB =  NO_REG;
+
     }
+    *valA = (srcA != NO_REG)?vm->registers[srcA]:0;
+    *valB = (srcB != NO_REG)?vm->registers[srcB]:0;
 }
    
