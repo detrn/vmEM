@@ -83,6 +83,8 @@ static vm_stare cpu_fetch(VM* vm, instruction_t* instruction){
     instruction->valP=0;
     switch(instruction->icode){
 	case HALT:
+	    vm->stare = VM_HALT;
+	    return vm->stare;
 	case NOP:
 	case RET:
 	 instruction_size = 1;
