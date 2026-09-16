@@ -2,20 +2,23 @@
 #include "../include/vm.h"
 #include "../include/instructions.h"
 #include <stdint.h>
-#include <stdlib.h>
 #include <sys/types.h>
 
-typedef uint8_t byte; 
 
-//Desi ALU nu e necesar ideea de a avea o unitate separata care sa faca operatii matematice e interesanta, asadar aceasta functie va incerca sa implementeze o unitate elementara fara sa complice codul
 static void alu(VM* vm,instruction_t* instruction,uint16_t*valA,uint16_t*valB,uint16_t*valE);
 static vm_stare cpu_fetch(VM *vm, instruction_t* instruction);
 static void cpu_decode(VM*vm, instruction_t* instruction,uint16_t* valA, uint16_t* valB);
 static void cpu_execute(VM*vm, instruction_t* instruction,uint16_t*valA,uint16_t*valB,uint16_t*valE);
 static void cpu_memory(VM* vm, instruction_t* instruction,uint16_t valA, uint16_t  *valE,uint16_t* valM);
-static void pc_update(VM*vm,instruction_t* instruction);
+static void cpu_writeback(VM* vm, instruction_t* instruction, uint16_t valE, uint16_t valM);
+static void cpu_pc_update(VM*vm,instruction_t* instruction,uint16_t valM);
 static uint8_t valid_ifun(icode_t icode, uint8_t ifun);
+static void alu(VM* vm,instruction_t* instruction,uint16_t*valA,uint16_t*valB,uint16_t*valE);
 
+uint8_t validareJMP(VM* vm, instruction_t* instruction);
+uint8_t validareMove(VM* vm, instruction_t* instruction);
+
+uint8_t checkOverflow(uint16_t valA, uint16_t valB,uint8_t ifun);
 vm_stare cpu_step(VM* vm){
     instruction_t instruction;
     uint16_t valA=0,valB=0,valE=0,valM=0;
@@ -32,7 +35,9 @@ vm_stare cpu_step(VM* vm){
     //cpu_memory()
     cpu_memory(vm,&instruction,valA,&valE,&valM);
     //cpu_writeback()
+    cpu_writeback(vm,&instruction,valE, valM);
     //cpu_pc_update()
+    cpu_pc_update(vm,&instruction,valM);
     vm->stare = VM_AOK;
     return vm->stare;
 }
@@ -214,6 +219,7 @@ static void cpu_decode(VM* vm, instruction_t* instruction,uint16_t* valA, uint16
 	    break;
 	case POPW:
 	    srcB = RSP;
+	    break;
 	case MRMOVW:
 	    srcB = instruction ->rA;
 	    break;
@@ -272,7 +278,7 @@ static void alu(VM* vm,instruction_t* instruction,uint16_t*valA,uint16_t*valB,ui
     //Muta le in cpu_execute ca n au ce cauta aici (desi practic asta face alu)
     //De fapt aici trebuiesc, deoarece doar opw modifica flagurile (restul instructiunilor se folosec de ele pentru decizii)
     vm->zero_flag = (*valE ==0); 
-    vm->sign_flag = (*valE & 0x8000); // 1000 0000
+    vm->sign_flag = ((*valE & 0x8000)!=0); // 1000 0000
     vm->overflow_flag =checkOverflow(*valA, *valB, instruction->ifun);
 
 }
@@ -318,7 +324,19 @@ static void cpu_execute(VM*vm, instruction_t* instruction,uint16_t*valA,uint16_t
 
 static void cpu_memory(VM* vm, instruction_t* instruction,uint16_t valA, uint16_t  *valE,uint16_t* valM){
     switch(instruction->icode){
-	case RRMOVW:
+	case PUSHW:
+	    vm->memory[*valE] = valA; 
+	    break;
+	case POPW:
+	    *valM = vm->memory[valA];
+	    break;
+	case CALL:
+	    vm->memory[*valE] = instruction->valP;
+	    break;
+	case RET:
+	    *valM = vm->memory[valA];
+	    break;
+	case RMMOVW:
 	    vm->memory[*valE] = valA;
 	    break;
 	case MRMOVW:
@@ -335,7 +353,7 @@ uint8_t validareMove(VM* vm, instruction_t* instruction){
 	    return vm->zero_flag || (vm->sign_flag != vm->overflow_flag);
 	    break;
 	case 1://movl 
-	    return vm->sign_flag;
+	    return vm->sign_flag!=vm->overflow_flag;
 	    break;
 	case 2://move 
 	    return vm->zero_flag; 
@@ -344,10 +362,38 @@ uint8_t validareMove(VM* vm, instruction_t* instruction){
 	    return !vm->zero_flag;
 	    break;
 	case 4://movge
-	    return vm->zero_flag == vm->overflow_flag;
+	    return vm->sign_flag == vm->overflow_flag;
 	    break;
 	case 5://movg 
 	    return !vm->zero_flag && (vm->sign_flag == vm->overflow_flag);
+	    break;
+	default:
+	    return 0;
+    }
+}
+uint8_t validareJMP(VM* vm, instruction_t* instruction){
+    if(instruction->icode!=7) return 0; 
+    switch(instruction->ifun){
+	case 0:
+	    return 1; 
+	    break;
+	case 1://jle
+	    return (vm->sign_flag !=vm->overflow_flag) || vm->zero_flag;
+	    break;
+	case 2://jl 
+	    return vm->sign_flag!=vm->overflow_flag; 
+	    break;
+	case 3://je 
+	    return vm->zero_flag;
+	    break;
+	case 4://jne
+	    return !vm->zero_flag;
+	    break;
+	case 5://jge
+	    return vm->sign_flag == vm->overflow_flag;
+	    break;
+	case 6://jg 
+	    return !vm->zero_flag && !(vm->sign_flag ^ vm->overflow_flag);
 	    break;
 	default:
 	    return 0;
@@ -381,5 +427,28 @@ static void cpu_writeback(VM* vm, instruction_t* instruction, uint16_t valE, uin
 }
 
 static void cpu_pc_update(VM* vm, instruction_t* instruction, uint16_t valM){
-    
+   switch(instruction->icode){
+	case OPW:
+	case RRMOVW:
+	case IRMOVW:
+	case MRMOVW:
+	case PUSHW:
+	case POPW:
+	case CMOVXX:
+	case RMMOVW:
+	    vm->program_counter = instruction->valP;
+	    break;
+	case CALL:
+	    vm->program_counter = instruction ->valC;
+	    break;
+	case RET:
+	    vm->program_counter = valM;
+	    break;
+	case JXX:
+	    if(validareJMP(vm,instruction)) vm->program_counter = instruction -> valC; 
+	    else vm->program_counter = instruction -> valP;
+	    break;
+	default: 
+	    vm->program_counter = instruction->valP;
+   }
 }
