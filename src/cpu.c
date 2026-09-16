@@ -1,20 +1,24 @@
 #include "../include/cpu.h"
 #include "../include/vm.h"
 #include "../include/instructions.h"
+#include <stdint.h>
+#include <stdlib.h>
 #include <sys/types.h>
 
 typedef uint8_t byte; 
 
+//Desi ALU nu e necesar ideea de a avea o unitate separata care sa faca operatii matematice e interesanta, asadar aceasta functie va incerca sa implementeze o unitate elementara fara sa complice codul
+static void alu(VM* vm,instruction_t* instruction,uint16_t*valA,uint16_t*valB,uint16_t*valE);
 static vm_stare cpu_fetch(VM *vm, instruction_t* instruction);
 static void cpu_decode(VM*vm, instruction_t* instruction,uint16_t* valA, uint16_t* valB);
-static void cpu_execute(VM*vm, instruction_t* instruction);
-static void cpu_memory(VM*vm, instruction_t* instruction);
+static void cpu_execute(VM*vm, instruction_t* instruction,uint16_t*valA,uint16_t*valB,uint16_t*valE);
+static void cpu_memory(VM* vm, instruction_t* instruction,uint16_t valA, uint16_t  *valE,uint16_t* valM);
 static void pc_update(VM*vm,instruction_t* instruction);
 static uint8_t valid_ifun(icode_t icode, uint8_t ifun);
 
 vm_stare cpu_step(VM* vm){
     instruction_t instruction;
-    uint16_t valA=0,valB=0;
+    uint16_t valA=0,valB=0,valE=0,valM=0;
     //cpu_fetch(): doc
     if(cpu_fetch(vm,&instruction)!=VM_AOK){
 	return vm->stare;
@@ -24,7 +28,9 @@ vm_stare cpu_step(VM* vm){
     cpu_decode(vm,&instruction,&valA,&valB);
 
     //cpu_execute()
+    cpu_execute(vm,&instruction,&valA,&valB,&valE);
     //cpu_memory()
+    cpu_memory(vm,&instruction,valA,&valE,&valM);
     //cpu_writeback()
     //cpu_pc_update()
     vm->stare = VM_AOK;
@@ -193,21 +199,21 @@ static void cpu_decode(VM* vm, instruction_t* instruction,uint16_t* valA, uint16
 	case MRMOVW:
 	    srcA = instruction->rB;
 	    break;
+	case RET:
 	case POPW: 
 	    srcA = RSP;
+	    break;
 	default: 
 	    srcA = NO_REG;
     }
     //determinare srcB
     switch(instruction->icode){
-	case RRMOVW:
 	case RMMOVW:
-	case IRMOVW:
 	case OPW:
-	case CMOVXX:
 	    srcB = instruction -> rB;
 	    break;
 	case POPW:
+	    srcB = RSP;
 	case MRMOVW:
 	    srcB = instruction ->rA;
 	    break;
@@ -218,9 +224,162 @@ static void cpu_decode(VM* vm, instruction_t* instruction,uint16_t* valA, uint16
 	    break;
      	default: 
 	    srcB =  NO_REG;
-
     }
     *valA = (srcA != NO_REG)?vm->registers[srcA]:0;
     *valB = (srcB != NO_REG)?vm->registers[srcB]:0;
 }
-   
+//OF in y86 e doar pentru operatiile signed, nu si pentru cele unsigned (cam ciudat
+uint8_t checkOverflow(uint16_t valA, uint16_t valB,uint8_t ifun){
+    int16_t rez, a =(int16_t) valA, b=(int16_t)valB;
+    switch(ifun){
+	case 0:{//add 
+	    rez = a + b; 
+	    if(a> 0 && b > 0 && rez < 0 || a < 0 && b < 0 && rez >0) return 1;  
+	    break;
+	}
+	case 1://sub
+	    rez = b - a;
+	    if((b > 0 && a < 0 && rez < 0) || (b < 0 && a > 0 && rez > 0)) return 1; 
+	    break;
+	default: 
+	    return 0; 
+
+    }
+    return 0;
+}
+//Doar pentru OPW, deoarece pentru restul nu prea are sens (C ofera operatii matematice)
+static void alu(VM* vm,instruction_t* instruction,uint16_t*valA,uint16_t*valB,uint16_t*valE){
+    if(instruction->icode!=6) return;
+    switch(instruction->ifun){
+	case 0:{//add 
+	    *valE = *valA + *valB;
+	    break;
+	}
+	case 1://sub 
+	    *valE = *valB - *valA; 
+	    break;
+	case 2://and
+	     *valE = *valA & *valB; 
+	    break;
+
+	case 3: //xor 
+	    *valE = *valA ^ *valB;
+	    break;
+	default:
+	    *valE = 0; 
+	    break;
+    }
+    //Muta le in cpu_execute ca n au ce cauta aici (desi practic asta face alu)
+    //De fapt aici trebuiesc, deoarece doar opw modifica flagurile (restul instructiunilor se folosec de ele pentru decizii)
+    vm->zero_flag = (*valE ==0); 
+    vm->sign_flag = (*valE & 0x8000); // 1000 0000
+    vm->overflow_flag =checkOverflow(*valA, *valB, instruction->ifun);
+
+}
+static void cpu_execute(VM*vm, instruction_t* instruction,uint16_t*valA,uint16_t*valB,uint16_t*valE){
+   switch(instruction->icode){
+	case RET:
+	    *valE = *valB + 2;
+	    break;
+	case RRMOVW:
+	    *valE = 0 + *valA;
+	    break;
+	case OPW:
+	    alu(vm,instruction,valA, valB,valE);
+	    break;
+	case CMOVXX:
+	    *valE = 0 + *valA;
+	    break;
+	case POPW:
+	    *valE = *valA + 2;
+	    break;
+	case PUSHW:
+	    *valE = *valB - 2;
+	    break;
+	case IRMOVW:
+	    *valE = 0 + instruction->valC;
+	    break;
+	case RMMOVW:
+	    *valE = *valB + instruction->valC;
+	    break;
+	case MRMOVW:
+	    *valE = *valA + instruction->valC;
+	    break;
+	case JXX:
+	    *valE = 0 + instruction->valC;
+	    break;
+	case CALL:
+	    *valE = *valB - 2;
+	    break;
+	default:
+	    break;
+   }
+}
+
+static void cpu_memory(VM* vm, instruction_t* instruction,uint16_t valA, uint16_t  *valE,uint16_t* valM){
+    switch(instruction->icode){
+	case RRMOVW:
+	    vm->memory[*valE] = valA;
+	    break;
+	case MRMOVW:
+	    *valM = vm->memory[*valE];
+	    break;
+	default:
+	    *valM = 0;
+    }
+}
+uint8_t validareMove(VM* vm, instruction_t* instruction){
+    if(instruction->icode!=0xc) return 0;
+    switch(instruction->ifun){
+	case 0: //movle 
+	    return vm->zero_flag || (vm->sign_flag != vm->overflow_flag);
+	    break;
+	case 1://movl 
+	    return vm->sign_flag;
+	    break;
+	case 2://move 
+	    return vm->zero_flag; 
+	    break;
+	case 3://movne
+	    return !vm->zero_flag;
+	    break;
+	case 4://movge
+	    return vm->zero_flag == vm->overflow_flag;
+	    break;
+	case 5://movg 
+	    return !vm->zero_flag && (vm->sign_flag == vm->overflow_flag);
+	    break;
+	default:
+	    return 0;
+    }
+}
+static void cpu_writeback(VM* vm, instruction_t* instruction, uint16_t valE, uint16_t valM){
+    switch(instruction->icode){
+	case OPW:
+	case RRMOVW:
+	case IRMOVW:
+	    vm->registers[instruction->rB] = valE;
+	    break;
+	case MRMOVW:
+	    vm->registers[instruction->rA]=valM;
+	    break;
+	case CALL:
+	case RET:
+	case PUSHW:
+	    vm->registers[RSP]=valE;
+	    break;
+	case POPW:
+	    vm->registers[RSP]=valE;
+	    vm->registers[instruction->rA]=valM;
+	    break;
+	case CMOVXX:
+	    if(validareMove(vm,instruction)) vm->registers[instruction->rB]=valE;
+	    break;
+	default:
+	    break;
+    }
+}
+
+static void cpu_pc_update(VM* vm, instruction_t* instruction, uint16_t valM){
+    
+}
