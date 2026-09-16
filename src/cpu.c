@@ -9,11 +9,12 @@ static void alu(VM* vm,instruction_t* instruction,uint16_t*valA,uint16_t*valB,ui
 static vm_stare cpu_fetch(VM *vm, instruction_t* instruction);
 static void cpu_decode(VM*vm, instruction_t* instruction,uint16_t* valA, uint16_t* valB);
 static void cpu_execute(VM*vm, instruction_t* instruction,uint16_t*valA,uint16_t*valB,uint16_t*valE);
-static void cpu_memory(VM* vm, instruction_t* instruction,uint16_t valA, uint16_t  *valE,uint16_t* valM);
+static vm_stare cpu_memory(VM* vm, instruction_t* instruction,uint16_t valA, uint16_t  *valE,uint16_t* valM);
 static void cpu_writeback(VM* vm, instruction_t* instruction, uint16_t valE, uint16_t valM);
 static void cpu_pc_update(VM*vm,instruction_t* instruction,uint16_t valM);
 static uint8_t valid_ifun(icode_t icode, uint8_t ifun);
 static void alu(VM* vm,instruction_t* instruction,uint16_t*valA,uint16_t*valB,uint16_t*valE);
+
 
 uint8_t validareJMP(VM* vm, instruction_t* instruction);
 uint8_t validareMove(VM* vm, instruction_t* instruction);
@@ -33,7 +34,7 @@ vm_stare cpu_step(VM* vm){
     //cpu_execute()
     cpu_execute(vm,&instruction,&valA,&valB,&valE);
     //cpu_memory()
-    cpu_memory(vm,&instruction,valA,&valE,&valM);
+    if(cpu_memory(vm,&instruction,valA,&valE,&valM) !=VM_AOK) return vm->stare;
     //cpu_writeback()
     cpu_writeback(vm,&instruction,valE, valM);
     //cpu_pc_update()
@@ -322,29 +323,25 @@ static void cpu_execute(VM*vm, instruction_t* instruction,uint16_t*valA,uint16_t
    }
 }
 
-static void cpu_memory(VM* vm, instruction_t* instruction,uint16_t valA, uint16_t  *valE,uint16_t* valM){
+static vm_stare cpu_memory(VM* vm, instruction_t* instruction,uint16_t valA, uint16_t  *valE,uint16_t* valM){
     switch(instruction->icode){
 	case PUSHW:
-	    vm->memory[*valE] = valA; 
-	    break;
+	    return write_word(vm, *valE, valA);
 	case POPW:
-	    *valM = vm->memory[valA];
-	    break;
+	    return read_word(vm, valA, valM);
 	case CALL:
-	    vm->memory[*valE] = instruction->valP;
-	    break;
+	    return write_word(vm, *valE, instruction->valP);
 	case RET:
-	    *valM = vm->memory[valA];
-	    break;
+	    return read_word(vm, valA, valM);
 	case RMMOVW:
-	    vm->memory[*valE] = valA;
-	    break;
+	    return write_word(vm, *valE, valA);
 	case MRMOVW:
-	    *valM = vm->memory[*valE];
-	    break;
+	    return read_word(vm, *valE, valM);
 	default:
 	    *valM = 0;
     }
+    vm->stare = VM_AOK;
+    return vm->stare;
 }
 uint8_t validareMove(VM* vm, instruction_t* instruction){
     if(instruction->icode!=0xc) return 0;
