@@ -2,22 +2,43 @@ CC = gcc
 CFLAGS = -Wall -Wextra -g -Iinclude
 
 TARGET = minivm16
-OBJS = src/main.o src/cpu.o src/vm.o src/debugger.o
+
+OBJS = src/vm/main.o \
+       src/vm/cpu.o \
+       src/vm/vm.o \
+       src/vm/debugger.o \
+       src/assembler/lexer.o
 
 $(TARGET): $(OBJS)
 	$(CC) $(OBJS) -o $(TARGET)
 
-src/main.o: src/main.c include/vm.h include/cpu.h include/debug.h
-	$(CC) $(CFLAGS) -c src/main.c -o src/main.o
+src/vm/main.o: src/vm/main.c \
+               include/vm/vm.h \
+               include/vm/cpu.h \
+               include/vm/debug.h \
+               include/assembler/lexer.h \
+               include/assembler/token.h
+	$(CC) $(CFLAGS) -c src/vm/main.c -o src/vm/main.o
 
-src/cpu.o: src/cpu.c include/cpu.h include/vm.h include/instructions.h
-	$(CC) $(CFLAGS) -c src/cpu.c -o src/cpu.o
+src/vm/cpu.o: src/vm/cpu.c \
+              include/vm/cpu.h \
+              include/vm/vm.h \
+              include/vm/instructions.h
+	$(CC) $(CFLAGS) -c src/vm/cpu.c -o src/vm/cpu.o
 
-src/vm.o: src/vm.c include/vm.h
-	$(CC) $(CFLAGS) -c src/vm.c -o src/vm.o
+src/vm/vm.o: src/vm/vm.c \
+             include/vm/vm.h
+	$(CC) $(CFLAGS) -c src/vm/vm.c -o src/vm/vm.o
 
-src/debugger.o: src/debugger.c include/debug.h include/vm.h
-	$(CC) $(CFLAGS) -c src/debugger.c -o src/debugger.o
+src/vm/debugger.o: src/vm/debugger.c \
+                   include/vm/debug.h \
+                   include/vm/vm.h
+	$(CC) $(CFLAGS) -c src/vm/debugger.c -o src/vm/debugger.o
+
+src/assembler/lexer.o: src/assembler/lexer.c \
+                       include/assembler/lexer.h \
+                       include/assembler/token.h
+	$(CC) $(CFLAGS) -c src/assembler/lexer.c -o src/assembler/lexer.o
 
 clean:
 	rm -f $(OBJS) $(TARGET)

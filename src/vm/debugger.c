@@ -1,4 +1,4 @@
-#include "../include/vm.h"
+#include "vm/vm.h"
 #include <stdint.h>
 #include <stdio.h>
 
@@ -41,7 +41,7 @@ void debug_dump_all(const VM* vm){
 	}
     } 
     steps++; 
-}
+    }
 
 void debug_print_flags(const VM* vm){
 }

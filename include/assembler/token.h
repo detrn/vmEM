@@ -24,23 +24,7 @@ typedef enum{
     REG_R14
 } Registrii_t;
 typedef enum{ 
-    token_halt = 0, 
-    token_nop,
-    token_rrmovw,
-    token_irmovw,
-    token_rmmovw,
-    token_mrmovw,
-    token_add,
-    token_subw,
-    token_andw,
-    token_xorw,
-    token_jmp,
-    token_jle,
-    token_jl,
-    token_je,
-    token_jne,
-    token_jge,
-    token_jg,
+    token_instruction,
     token_immediate,
     token_comma,
     token_semicolon,
@@ -48,18 +32,19 @@ typedef enum{
     token_eof,
     token_invalid,
     token_identifier,
-    token_newline
+    token_newline,
+    token_registru
 }Token_type_t ;
 
 typedef struct{
     const char* p; 
     size_t size; 
-}string;
+}String; 
 
 typedef struct{ 
     Token_type_t type; 
     union{
-	string data; 
+	String data; 
 	uint16_t valoare; 
 	Registrii_t registru;
     };

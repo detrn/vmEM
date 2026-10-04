@@ -1,0 +1,50 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-Iinclude",
+      "-c",
+      "-o",
+      "src/vm/main.o",
+      "src/vm/main.c"
+    ],
+    "directory": "/home/detrnz/vmEm",
+    "file": "/home/detrnz/vmEm/src/vm/main.c",
+    "output": "/home/detrnz/vmEm/src/vm/main.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-Iinclude",
+      "-c",
+      "-o",
+      "src/vm/cpu.o",
+      "src/vm/cpu.c"
+    ],
+    "directory": "/home/detrnz/vmEm",
+    "file": "/home/detrnz/vmEm/src/vm/cpu.c",
+    "output": "/home/detrnz/vmEm/src/vm/cpu.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-Iinclude",
+      "-c",
+      "-o",
+      "src/vm/vm.o",
+      "src/vm/vm.c"
+    ],
+    "directory": "/home/detrnz/vmEm",
+    "file": "/home/detrnz/vmEm/src/vm/vm.c",
+    "output": "/home/detrnz/vmEm/src/vm/vm.o"
+  }
+]

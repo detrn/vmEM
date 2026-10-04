@@ -1,6 +1,6 @@
-#include "../../include/vm/cpu.h"
-#include "../../include/vm/vm.h"
-#include "../../include/vm/instructions.h"
+#include "vm/cpu.h"
+#include "vm/vm.h"
+#include "vm/instructions.h"
 #include <stdint.h>
 #include <sys/types.h>
 

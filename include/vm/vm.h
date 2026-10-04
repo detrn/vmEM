@@ -5,7 +5,6 @@
 #ifndef VM_H
 #define VM_H
 #include <stdint.h>
-#include "./instructions.h"
 #define MEMORY_SIZE 65536
 
 //enum de stari (inspirat din y86-64 --csapp)
