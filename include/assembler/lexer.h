@@ -13,5 +13,12 @@ typedef struct{
 void lexer_init(Lexer* lexer, const char* source);
 Token next_token(Lexer* lexer);
 
+void lexer_debug(const Lexer* lexer,const Token* token);
 
+#if defined  DEBUG_LEXER || defined DEBUG 
+    #define DEBUG_LEXER_PRINT(lexer) lexer_debug(lexer)
+    
+#else 
+    #define DEBUG_LEXER_PRINT(lexer)((void)0)
+#endif 
 #endif 

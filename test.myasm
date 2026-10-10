@@ -1,2 +1,1 @@
-IRMOVW $1234, %RAX ; comentariu 
-NOP ; inca n am testat instructiunile of
+HALT

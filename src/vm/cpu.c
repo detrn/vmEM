@@ -243,7 +243,7 @@ uint8_t checkOverflow(uint16_t valA, uint16_t valB,uint8_t ifun){
     switch(ifun){
 	case 0:{//add 
 	    rez = a + b; 
-	    if(a> 0 && b > 0 && rez < 0 || a < 0 && b < 0 && rez >0) return 1;  
+	    if((a > 0 && b > 0 && rez < 0) || (a < 0 && b < 0 && rez >0)) return 1;  
 	    break;
 	}
 	case 1://sub

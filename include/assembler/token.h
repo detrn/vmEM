@@ -6,35 +6,22 @@
  */
 #include <stdint.h>
 #include <stddef.h>
-typedef enum{
-    REG_RAX,
-    REG_RCX,
-    REG_RDX,
-    REG_RBX,
-    REG_RSP,
-    REG_RBP,
-    REG_RSI,
-    REG_RDI,
-    REG_R8,
-    REG_R9,
-    REG_R10,
-    REG_R11,
-    REG_R12,
-    REG_R13,
-    REG_R14
-} Registrii_t;
+
 typedef enum{ 
-    token_instruction,
-    token_immediate,
-    token_comma,
-    token_semicolon,
-    token_colon,
-    token_eof,
-    token_invalid,
-    token_identifier,
-    token_newline,
-    token_registru
-}Token_type_t ;
+    token_instruction, //corespunde cu valoare 
+    token_number,//1  
+    token_dollar,//2  
+    token_rbracket,//3
+    token_lbracket,//4 
+    token_comma,//5 
+    token_semicolon,//6 
+    token_colon,//7 
+    token_eof,//8 
+    token_invalid,//9 
+    token_identifier,//corespunde cu data 10 
+    token_newline, //11
+    token_registru //corespunde cu valoare 12
+}Token_type;
 
 typedef struct{
     const char* p; 
@@ -42,11 +29,11 @@ typedef struct{
 }String; 
 
 typedef struct{ 
-    Token_type_t type; 
+    Token_type type; 
     union{
 	String data; 
 	uint16_t valoare; 
-	Registrii_t registru;
     };
+    size_t column, line;
 }Token;
 #endif 

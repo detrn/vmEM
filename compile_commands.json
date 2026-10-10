@@ -46,5 +46,53 @@
     "directory": "/home/detrnz/vmEm",
     "file": "/home/detrnz/vmEm/src/vm/vm.c",
     "output": "/home/detrnz/vmEm/src/vm/vm.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-Iinclude",
+      "-c",
+      "-o",
+      "src/vm/debugger.o",
+      "src/vm/debugger.c"
+    ],
+    "directory": "/home/detrnz/vmEm",
+    "file": "/home/detrnz/vmEm/src/vm/debugger.c",
+    "output": "/home/detrnz/vmEm/src/vm/debugger.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-Iinclude",
+      "-c",
+      "-o",
+      "src/assembler/lexer.o",
+      "src/assembler/lexer.c"
+    ],
+    "directory": "/home/detrnz/vmEm",
+    "file": "/home/detrnz/vmEm/src/assembler/lexer.c",
+    "output": "/home/detrnz/vmEm/src/assembler/lexer.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-Iinclude",
+      "-c",
+      "-o",
+      "src/assembler/parser.o",
+      "src/assembler/parser.c"
+    ],
+    "directory": "/home/detrnz/vmEm",
+    "file": "/home/detrnz/vmEm/src/assembler/parser.c",
+    "output": "/home/detrnz/vmEm/src/assembler/parser.o"
   }
 ]

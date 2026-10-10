@@ -15,11 +15,9 @@ static const char* status_words[4]={
     "VM_ADDR",
     "VM_INS"
 };
-void debug_print_registers(const VM* vm){
+// void debug_print_registers(const VM* vm){}
 
-    printf("VM16 -- Register Print --\n");
     
-}
 void debug_dump_all(const VM* vm){
     static uint32_t steps = 0; 
     if(vm->stare != VM_AOK){
@@ -43,5 +41,4 @@ void debug_dump_all(const VM* vm){
     steps++; 
     }
 
-void debug_print_flags(const VM* vm){
-}
+//void debug_print_flags(const VM* vm){}

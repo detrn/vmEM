@@ -1,8 +1,10 @@
+#include "assembler/statement.h"
 #include "assembler/token.h"
 #include "vm/vm.h"
 #include "vm/cpu.h"
 #include "vm/debug.h"
 #include "assembler/lexer.h"
+#include "assembler/parser.h"
 #include <stdio.h>
 #include <stdlib.h>
 int main(void)
@@ -26,13 +28,8 @@ int main(void)
     source[size]='\0';
     Lexer lexer = {0};
     lexer_init(&lexer,source);
-    Token tokens[100];
-    size_t i = 0;
-    while(1){
-	tokens[i] = next_token(&lexer);
-	if(tokens[i].type == token_eof) break;
-	i++;
-    }
+   
+/*
     printf("tokens[0] = %d (astept %d), data = %.*s\n",
        tokens[0].type,
        token_instruction,
@@ -71,12 +68,19 @@ printf("tokens[6] = %d (astept %d) NEWLINE\n",
 printf("tokens[7] = %d (astept %d) EOF\n",
        tokens[7].type,
        token_eof);
+*/
+    //Incarcare instructiuni in memorie. Nu mai avem nevoie de asta
+    //Sau asta e scopul 
+/*
     vm.memory[0] = 0x30;
     vm.memory[1] = 0xF0;
     vm.memory[2] = 0x34;
     vm.memory[3] = 0x12;
     vm.memory[4] = 0x00;
+*/ 
 
+/* Starea masinii. Momentan test pentru assembler, deci nici de asta nu 
+ * mai avem nevoie momentan 
     vm.program_counter = 0;
     vm.stare = VM_AOK;
 
@@ -84,6 +88,20 @@ printf("tokens[7] = %d (astept %d) EOF\n",
     cpu_step(&vm);
 
     debug_dump_all(&vm);
+*/ 
+    Parser parser; 
+    parser_init(&parser,&lexer);
+    Statement statement ={.type = st_instr};
+    printf("Parser err: %d, parser cur. token: %d\n", parser.err, parser.current.type);
+    while(statement.type != st_invalid){
+	if(parser.current.type == token_eof){
+	    statement =(Statement){.type = st_eof};
+	    printf("Statement: %d\n",statement.type); 
+	    break;
+	}
+	statement = parser_debug_next(&parser);
+    }
+    printf("Exit\n");
     free(source);
     return 0;
 }
