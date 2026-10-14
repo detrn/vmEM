@@ -1,3 +1,4 @@
+#include "assembler/assembler.h"
 #include "assembler/statement.h"
 #include "assembler/token.h"
 #include "vm/vm.h"
@@ -91,17 +92,26 @@ printf("tokens[7] = %d (astept %d) EOF\n",
 */ 
     Parser parser; 
     parser_init(&parser,&lexer);
-    Statement statement ={.type = st_instr};
-    printf("Parser err: %d, parser cur. token: %d\n", parser.err, parser.current.type);
-    while(statement.type != st_invalid){
-	if(parser.current.type == token_eof){
-	    statement =(Statement){.type = st_eof};
-	    printf("Statement: %d\n",statement.type); 
-	    break;
-	}
-	statement = parser_debug_next(&parser);
+    Assembler assembler;
+    assemblerInit(&assembler,&parser,&lexer);
+    if(!encode(&assembler)){
+	printf("Eroare assembler (encoding)\n");
+	return 0;
     }
-    printf("Exit\n");
+    for(size_t i = 0; i < assembler.buffer.size; i++){
+	printf("%02X ", assembler.buffer.data[i]);
+    }
+    if(!loadMemory(&vm,&assembler.buffer,assembler.buffer.size)){
+	printf("Eroare incarcare memorie\n");
+	return 0;
+    }
+    vm.program_counter = 0;
+    vm.stare = VM_AOK;
+    for(int i = 0; i < 10; i++){
+	cpu_step(&vm);
+	printf("PC = %u\n", (unsigned)vm.program_counter);
+    }
     free(source);
+    destroyAssembler(&assembler);
     return 0;
 }

@@ -1,7 +1,14 @@
 #include "vm/vm.h"
 #include <stdint.h>
 
+int loadMemory(VM *vm, ByteBuffer *buffer, size_t size){
+    if(size > MEMORY_SIZE) return 0;  
+    for(size_t i = 0 ; i <size;i++){
+	vm->memory[i] = buffer->data[i];
+    }
+    return 1;
 
+}
 
 vm_stare read_word(VM*vm, uint16_t address, uint16_t* word){
     if((uint32_t)address +1 >=MEMORY_SIZE){

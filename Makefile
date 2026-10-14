@@ -1,5 +1,11 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -g -Iinclude
+
+CFLAGS = -std=c11 -Iinclude -Wall -Wextra -Wpedantic -Wconversion \
+         -Wshadow -g3 -O1 \
+         -fsanitize=address,undefined \
+         -fno-omit-frame-pointer
+
+LDFLAGS = -fsanitize=address,undefined
 
 TARGET = minivm16
 
@@ -8,10 +14,11 @@ OBJS = src/vm/main.o \
        src/vm/vm.o \
        src/vm/debugger.o \
        src/assembler/lexer.o \
-       src/assembler/parser.o 
+       src/assembler/parser.o \
+       src/assembler/assembler.o
 
 $(TARGET): $(OBJS)
-	$(CC) $(OBJS) -o $(TARGET)
+	$(CC) $(OBJS) -o $(TARGET) $(LDFLAGS)
 
 src/vm/main.o: src/vm/main.c \
                include/vm/vm.h \
@@ -48,6 +55,11 @@ src/assembler/parser.o: src/assembler/parser.c \
 			include/assembler/statement.h
 	$(CC) $(CFLAGS) -c src/assembler/parser.c -o src/assembler/parser.o 
 
+src/assembler/assembler.o: src/assembler/assembler.c \
+	include/assembler/statement.h \
+	include/assembler/parser.h \
+	include/assembler/lexer.h 
+	$(CC) $(CFLAGS) -c src/assembler/assembler.c -o src/assembler/assembler.o 
 
 clean:
 	rm -f $(OBJS) $(TARGET)

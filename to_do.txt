@@ -1,0 +1,14 @@
+Refactor la vm si cpu, pentru ca e necesara dezvoltarea. Nu am inteles ca trebuie sa se separ cpu si vm de la inceput, iar acum e necesara refacerea. 
+
+Model aproximativ: vm va avea cpu, si memorie + stare 
+Cpu va prelua registrii si flagurile (ca n realitate) 
+
+Pe viitor va fi mai bine pentru cand o sa existe kernelul 
+
+De adaugat: sugestii pentru recuperarea erorilor ca la un compilator (expected ceva pe linia n, col m)
+
+///1. Verificare overflow la dublarea capacității vectorilor dinamici și la înmulțirea capacity * sizeof(element).
+//2. Verificarea valorilor returnate de writeByte(), writeWord() și celelalte funcții care pot eșua.
+//3. Verificarea corespondenței dintre encoder și decoder pentru MRMOVW, PUSHW, POPW și CMOVXX.
+//4. Refactorizarea encode() pentru procesarea întregului program și apelarea resolveSymbols() numai la final.
+//5. Teste cu AddressSanitizer și UndefinedBehaviorSanitizer.

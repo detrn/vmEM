@@ -6,6 +6,7 @@
 #define VM_H
 #include <stdint.h>
 #define MEMORY_SIZE 65536
+#include "assembler/assembler.h"
 
 //enum de stari (inspirat din y86-64 --csapp)
 typedef enum{
@@ -28,7 +29,7 @@ typedef struct{
 
 }VM;
 
-
+int loadMemory(VM* vm, ByteBuffer* buffer, size_t size);
 
 vm_stare read_word(VM*vm, uint16_t address, uint16_t* word);
 vm_stare write_word(VM* vm,uint16_t address, uint16_t valA);

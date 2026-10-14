@@ -1,1 +1,4 @@
+start:
+NOP
+JMP start
 HALT

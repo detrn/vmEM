@@ -94,5 +94,21 @@
     "directory": "/home/detrnz/vmEm",
     "file": "/home/detrnz/vmEm/src/assembler/parser.c",
     "output": "/home/detrnz/vmEm/src/assembler/parser.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-g",
+      "-Iinclude",
+      "-c",
+      "-o",
+      "src/assembler/assembler.o",
+      "src/assembler/assembler.c"
+    ],
+    "directory": "/home/detrnz/vmEm",
+    "file": "/home/detrnz/vmEm/src/assembler/assembler.c",
+    "output": "/home/detrnz/vmEm/src/assembler/assembler.o"
   }
 ]
