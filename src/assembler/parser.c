@@ -44,7 +44,6 @@ static void advance_parser(Parser* parser){
 
 static Instruction parse_instruction(Parser* parser){
     Opcode opcode = (Opcode) parser->current.valoare;
-    printf("Opcode primit:%d == %d\n",opcode, op_ret);
     Instruction instruction = {.opcode = opcode};
     switch(opcode){ 
 	//IMPORTANT:
@@ -54,7 +53,6 @@ static Instruction parse_instruction(Parser* parser){
 	case op_halt:
 	case op_nop:
 	case op_ret:
-	    printf("RET branch\n");
 	    instruction.srcA.type = operand_none;
 	    instruction.srcB.type = operand_none;
              break;
@@ -71,11 +69,11 @@ static Instruction parse_instruction(Parser* parser){
 	case op_rrmov: 
 	    if(!expect(parser,token_registru)) break;
 	    instruction.srcA.type = operand_register;
-	    instruction.srcA.reg = parser->current.valoare;
+	    instruction.srcA.reg =(uint8_t) parser->current.valoare;
 	    if(!expect(parser,token_comma)) break;
 	    if(!expect(parser,token_registru)) break;
 	    instruction.srcB.type = operand_register;
-	    instruction.srcB.reg = parser->current.valoare;
+	    instruction.srcB.reg = (uint8_t)parser->current.valoare;
 		break;
         case op_irmov:
 	    if(!expect(parser,token_dollar)) break;
@@ -88,14 +86,14 @@ static Instruction parse_instruction(Parser* parser){
 	    if(!expect(parser,token_registru))
 		break;
 	    instruction.srcB.type = operand_register;
-	    instruction.srcB.reg = parser->current.valoare;
+	    instruction.srcB.reg = (uint8_t)parser->current.valoare;
 	    break;
         case op_rmmov:
 	    if(!expect(parser,token_registru))
 		break;
 	    
 	    instruction.srcA.type = operand_register;
-	    instruction.srcA.reg = parser->current.valoare; 
+	    instruction.srcA.reg = (uint8_t)parser->current.valoare; 
 	    if(!expect(parser,token_comma))
 		break;
 	    if(parser->next.type == token_number){
@@ -110,7 +108,7 @@ static Instruction parse_instruction(Parser* parser){
 		break;
 	    
 	    instruction.srcB.type = operand_memory;
-	    instruction.srcB.memory.baza = parser->current.valoare;
+	    instruction.srcB.memory.baza = (uint8_t)parser->current.valoare;
 	    if(!expect(parser,token_rbracket))
 		break;
             break;
@@ -126,13 +124,13 @@ static Instruction parse_instruction(Parser* parser){
 	    if(!expect(parser,token_registru))
 		break;
 	    instruction.srcA.type = operand_memory;
-	    instruction.srcA.memory.baza = parser->current.valoare;
+	    instruction.srcA.memory.baza = (uint8_t)parser->current.valoare;
 	    if(!expect(parser,token_rbracket))
 		break;
 	    if(!expect(parser,token_comma)) break;
 	    if(!expect(parser,token_registru)) break;
 	    instruction.srcB.type = operand_register;
-	    instruction.srcB.reg = parser->current.valoare;
+	    instruction.srcB.reg = (uint8_t)parser->current.valoare;
             break;
         case op_jmp:
         case op_jle:
@@ -164,7 +162,7 @@ static Instruction parse_instruction(Parser* parser){
 	    //srcA pentru ca e sursa care se duce pe stiva 
 	    if(!expect(parser,token_registru)) break;
 	    instruction.srcA.type = operand_register; 
-	    instruction.srcA.reg = parser->current.valoare;
+	    instruction.srcA.reg = (uint8_t)parser->current.valoare;
             break;
 
 	/*
@@ -180,7 +178,7 @@ static Instruction parse_instruction(Parser* parser){
 	    //deci incerc sa pastrez o ordine sa fie mai usor la encoder sau sa
 	    //imit isaul mai bine zice
 	    instruction.srcB.type = operand_register; 
-	    instruction.srcB.reg = parser->current.valoare;
+	    instruction.srcB.reg = (uint8_t)parser->current.valoare;
             break;
         default:
 	    parser->err = 1;

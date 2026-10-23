@@ -74,9 +74,9 @@ static Token scan_for_register(Lexer *lexer){
     }
     size_t str_len = end - start;
     String string = {.p = &lexer->source_data[start], .size = end - start};
-    for(int i = 0; i < REG_NUMBER; i++){
+    for(size_t i = 0; i < REG_NUMBER; i++){
         if(str_len == strlen(registrii[i]) && !memcmp(string.p, registrii[i], end-start)){
-            Token token = {.type = token_registru, .valoare = i, .column = start_column, .line = start_line}; //FOARTE IMPORTANT: registrii devine SFANT. El e ordinea suprema si altfel nu merge programul. 
+            Token token = {.type = token_registru, .valoare =(uint16_t) i, .column = start_column, .line = start_line}; //FOARTE IMPORTANT: registrii devine SFANT. El e ordinea suprema si altfel nu merge programul. 
             return token;
         }
     }
@@ -101,10 +101,10 @@ static Token scan_for_word(Lexer *lexer){
     size_t end = lexer->index;
     String string = {.p = &lexer->source_data[start], .size = end - start};
     // Caz 1: e instructiune
-    for(int i = 0; i < INSTRUCTION_NUMBER; i++){
+    for(size_t i = 0; i < INSTRUCTION_NUMBER; i++){
         size_t instr_size = strlen(instructions[i]);
         if(string.size == instr_size && !memcmp(string.p, instructions[i], end-start)){
-            Token token = {.type = token_instruction, .valoare = i, .column = start_column, .line = start_line}; //FOARTE IMPORTANT: e la fel ca la scan for register. 
+            Token token = {.type = token_instruction, .valoare = (uint16_t)i, .column = start_column, .line = start_line}; //FOARTE IMPORTANT: e la fel ca la scan for register. 
 														//Iau stringul si l convertesc la index (ca sa am informatia pregatite 
 														//pentru enums din parser)
             return token;
@@ -138,7 +138,7 @@ static Token scan_for_number(Lexer *lexer){
     buffer[end-start] = '\0';
     int valoare = atoi(buffer);
     if(valoare > 65535) return (Token){.type = token_invalid, .valoare = 0, .column = start_column, .line = start_line};
-    Token token = {.type = token_number, .valoare = valoare, .column = start_column, .line = start_line};
+    Token token = {.type = token_number, .valoare = (uint16_t)valoare, .column = start_column, .line = start_line};
     return token;
 }
 

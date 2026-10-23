@@ -38,7 +38,7 @@ int assemblerInit(Assembler *assembler, FILE* file){
 	fclose(file);
 	return 0;
     }
-    assembler->source = malloc( file_size + 1);
+    assembler->source = malloc( (size_t)file_size + 1);
     if(!assembler->source){
 	fclose(file);
 	return 0;
@@ -96,8 +96,8 @@ static int writeByte(uint8_t value, ByteBuffer* bBuffer){
 //finial
 static int writeWord(uint16_t value, ByteBuffer* bBuffer){
     if(checkReserve(2,bBuffer)){
-	uint8_t low = value;
-	uint8_t high = value >> 8; 
+	uint8_t low = (uint8_t)value;
+	uint8_t high = (uint8_t)(value >> 8); 
     	bBuffer->data[bBuffer->size++] = low;
 	bBuffer->data[bBuffer->size++] = high; //LITTLE ENDIAN ATENTIE: CA LA CPU.C 
 	return 1;			       //VERIFICA
@@ -229,7 +229,7 @@ static int encodeInstruction(Assembler* assembler, Instruction* instruction){
 	case CMOVXX:{
 	    uint8_t rA = instruction->srcA.reg;
 	    uint8_t rB = instruction->srcB.reg;
-	    stop =writeByte((rA << 4) | rB, buffer);
+	    stop =writeByte((uint8_t)((rA << 4) | rB), buffer);
 	    if(!stop) return 0;
 	    break;
 	}
@@ -247,7 +247,7 @@ static int encodeInstruction(Assembler* assembler, Instruction* instruction){
 	    uint8_t rA = instruction->srcA.reg;
 	    uint16_t offsetB = instruction->srcB.memory.offset;
 	    uint8_t bazaB = instruction->srcB.memory.baza;
-	    stop = writeByte((rA << 4) | bazaB, buffer);
+	    stop = writeByte((uint8_t)((rA << 4) | bazaB), buffer);
 	    if(!stop) return 0;
 	    stop = writeWord(offsetB, buffer);
 	    if(!stop) return 0;
@@ -259,7 +259,7 @@ static int encodeInstruction(Assembler* assembler, Instruction* instruction){
 	    uint16_t offsetA = instruction->srcA.memory.offset;
 	    uint8_t bazaA = instruction->srcA.memory.baza;
 	    uint8_t rB = instruction->srcB.reg;
-	    stop = writeByte((bazaA << 4) | rB, buffer);
+	    stop = writeByte((uint8_t)((bazaA << 4) | rB), buffer);
 	    if(!stop) return 0;
 	    stop = writeWord(offsetA,buffer);
 	    if(!stop) return 0;
@@ -287,13 +287,13 @@ static int encodeInstruction(Assembler* assembler, Instruction* instruction){
 	}
 	case PUSHW:{
 	    uint8_t regA = instruction->srcA.reg;
-	    stop = writeByte((regA << 4) | 0xf, buffer);
+	    stop = writeByte((uint8_t)((regA << 4) | 0xf), buffer);
 	    if(!stop) return 0;
             break;
 	}
         case POPW:{
 	    uint8_t regB = instruction->srcB.reg;
-	    stop = writeByte((regB<<4)| 0xf, buffer);
+	    stop = writeByte((uint8_t)((regB<<4)| 0xf), buffer);
 	    if(!stop) return 0;
             break;
 	}
@@ -321,10 +321,10 @@ static int insertSymbolTable(SymbolTable* table, Symbol symbol){
  * at the specified address 
  */
 
-static int patchUnresolved(ByteBuffer* buffer, size_t location, uint16_t value){
+static int patchUnresolved(ByteBuffer* buffer, size_t location, size_t value){
     if(location > buffer->size) return 0; 
-    buffer->data[location] = value;
-    buffer->data[location + 1 ] = value >> 8; 
+    buffer->data[location] =(uint8_t)value;
+    buffer->data[location + 1 ] =(uint8_t)( value >> 8); 
     return 1; 
 }
 
@@ -371,6 +371,7 @@ int encode(Assembler* assembler){
 		break;
 	}
     }
+    return 1;
 }
 
 void destroyAssembler(Assembler* assembler){

@@ -13,7 +13,7 @@ memory_status read_word(Memory* memory, uint16_t address, uint16_t* word){
     }
     uint8_t low = memory->data[address];
     uint8_t high = memory->data[address + 1];
-    *word = low | (uint16_t)high << 8; 
+    *word = (uint16_t)(low | high << 8); 
 
     memory->status = m_ok;
     return memory->status; 
@@ -23,8 +23,8 @@ memory_status write_word(Memory* memory,uint16_t address, uint16_t valA){
 	memory->status= m_invalid;
 	return memory->status;
     }
-    uint8_t low = valA;
-    uint8_t high= valA >> 8;
+    uint8_t low =(uint8_t) valA;
+    uint8_t high= (uint8_t)(valA >> 8);
     memory->data[address] = low;
     memory->data[address + 1] = high;
     memory->status= m_ok;

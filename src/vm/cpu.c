@@ -164,7 +164,7 @@ static cpu_status cpu_fetch(Cpu* cpu,Memory* memory, Instruction* instruction){
 	    if (status != m_ok) {
 		return CPU_ADDR;
 	    }
-	    instruction->valC = (uint16_t)low_value | ((uint16_t)high_value << 8);
+	    instruction->valC =(uint16_t)(low_value |high_value << 8);
 	    break;
 	}
 	case RMMOVW:
@@ -190,7 +190,7 @@ static cpu_status cpu_fetch(Cpu* cpu,Memory* memory, Instruction* instruction){
 	    if (status != m_ok) {
 		return CPU_ADDR;
 	    }
-	    instruction->valC = (uint16_t)low_value | ((uint16_t)high_value << 8);
+	    instruction->valC = (uint16_t)(low_value | high_value << 8);
 	    break;
 	}
 	case OPW: {
@@ -218,7 +218,7 @@ static cpu_status cpu_fetch(Cpu* cpu,Memory* memory, Instruction* instruction){
 	    if (status != m_ok) {
 		return CPU_ADDR;
 	    }
-	    instruction->valC = (uint16_t)low_value | ((uint16_t)high_value << 8);
+	    instruction->valC = (uint16_t)(low_value | high_value << 8);
 	    break;
 	}
 	case PUSHW:
