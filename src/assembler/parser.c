@@ -10,7 +10,16 @@
 #ifndef INSTRUCTION_NUMBER
 #define INSTRUCTION_NUMBER 27
 #endif
+
+/*
+ * .current becomes .next and .next is assigned the next token produces by the 
+ * lexer 
+ */
 static void advance_parser(Parser* parser);
+
+/*
+ * Checks if the next tokens type is the one expected by the grammar 
+*/
 
 static int expect(Parser* parser, Token_type type){  
     if(parser->next.type != type){
@@ -25,6 +34,13 @@ static void advance_parser(Parser* parser){
    parser->current = parser->next;
    parser->next = next_token(parser->lex);
 }
+
+/*
+ * This function mainly functions as the grammar of the language. 
+ * It returns an instruction that has all the information 
+ * in order for the process to continue. 
+ *
+ */ 
 
 static Instruction parse_instruction(Parser* parser){
     Opcode opcode = (Opcode) parser->current.valoare;
@@ -151,6 +167,13 @@ static Instruction parse_instruction(Parser* parser){
 	    instruction.srcA.reg = parser->current.valoare;
             break;
 
+	/*
+	 * Pop and push follow the way that the ISA was modeled 
+	 * The software usually follows instruction src, dest 
+	 * This is why srcB (which i forgot to convert to dest) 
+	 * is assigned the register, since the register is the destination 
+	 * Push follows the same logic 
+	 */
         case op_pop:
 	    if(!expect(parser,token_registru)) break;
 	    //srcB ptc trebuia sa fie dest. La pop destinatia e registrul din instructiune
@@ -175,6 +198,7 @@ void parser_init(Parser* parser, Lexer* lexer){
     parser->next = next_token(parser->lex);
     parser->err = 0; 
 }
+
 Statement parse(Parser* parser){
     //Primim token de la lexer. Trebuie sa construim un statement
     //Statementul poate contine: instructiune sau label 
@@ -202,7 +226,10 @@ Statement parse(Parser* parser){
 		return statement;
 	}
 } 
-
+/*
+ * Debug functions used in the main debug function 
+ * See header file for more
+ */
 static void print_operand(const Operand* op){
     switch(op->type){
 	case operand_label:
@@ -237,6 +264,12 @@ static void print_operand(const Operand* op){
 static void print_statement(const Statement* statement){
     switch(statement->type){
 	case st_instr:{
+	    /*
+	     * TO DO: 
+	     * muta toate sirurile de caractere intr un loc specific si defineste le 
+	     * doar o data ca sa nu mai fie dezordonate si peste tot aceleasi date 
+	     * Posibile erori 
+	     */
 	    const char *instructions[INSTRUCTION_NUMBER] = { "HALT", "NOP", "RRMOVW", "IRMOVW", "RMMOVW", "MRMOVW", "ADD", "SUBW", "ANDW", "XORW", "JMP", "JLE", "JL", "JE", "JNE", "JGE", "JG","CMOVLE","CMOVL","CMOVE","CMOVNE","CMOVGE","CMOVG","CALL","RET","PUSHW","POPW"};
 	    printf("Instructiune:%s\n",instructions[statement->instr.opcode]);
 	    print_operand(&statement->instr.srcA);

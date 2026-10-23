@@ -2,6 +2,12 @@
 #define STATEMENT_H
 #include "token.h"
 
+
+/*
+ * Defines the keywords for the instructions that are possbile in 
+ * this ISA
+ *
+ */
 typedef enum{
     op_halt = 0,  
     op_nop,
@@ -32,6 +38,15 @@ typedef enum{
     op_pop
 }Opcode;
 
+/*
+ * Operands can be of four types: 
+ * label e.g. label 
+ * none e.g. RET 
+ * register e.g. %rax 
+ * immediate e.g. 0x1234
+ * memory e.g [%rax]
+ */
+
 typedef enum{
     operand_label=0,
     operand_none,
@@ -39,6 +54,14 @@ typedef enum{
     operand_immediate,
     operand_memory
 }OperandType;
+
+/*
+ * Baza is a register and acts as the start address 
+ * Offset is an immediate 
+ * e.g. 12[%rax] 
+ * The value stored in the register plus the offset must form a valid 
+ * memory address 
+ * */
 
 typedef struct{
     uint8_t baza; 
@@ -62,6 +85,11 @@ typedef struct{
     Operand srcA, srcB;
 }Instruction;
 
+/*
+ * st_invalid means the parser has encountered an error and 
+ * produced an invalid statement 
+ * st_eof signals the end of the file 
+ */
 typedef enum{
     st_instr=0,
     st_label,
@@ -71,9 +99,16 @@ typedef enum{
 }StatementType; 
 
 /*
+ * TO DO:
 typedef struct{
 }Directive;
 */ 
+
+/*
+ * Statement is the result of the parse function available in the parser API 
+ * A statement may either contain an instruction or a label. 
+ */
+
 typedef struct{
     StatementType type;
     union{

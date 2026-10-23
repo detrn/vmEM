@@ -35,7 +35,11 @@ void lexer_init(Lexer *lexer, const char *source){
     lexer->line = 1;
     lexer->index = 0;
 }
-
+/*
+ * Instructions and registrii are used for comparing the source_data labels
+ * to the actual enum values. The elements are placed in the order that resembles 
+ * the enum ones
+ */
 const char *instructions[INSTRUCTION_NUMBER] = {
     "HALT", "NOP", "RRMOVW", "IRMOVW", "RMMOVW", "MRMOVW", "ADD",
     "SUBW", "ANDW", "XORW", "JMP", "JLE", "JL", "JE", "JNE", "JGE", "JG","CMOVLE","CMOVL","CMOVE","CMOVNE","CMOVGE","CMOVG","CALL","RET","PUSHW","POPW"
@@ -47,6 +51,11 @@ const char *registrii[REG_NUMBER] = {
 };
 
 static void advance(Lexer *lexer);
+
+
+/*
+ * The function is dependent on the registrii string array 
+ */ 
 
 static Token scan_for_register(Lexer *lexer){
     size_t start_line = lexer->line;
@@ -74,6 +83,11 @@ static Token scan_for_register(Lexer *lexer){
     Token token = {.type = token_invalid, .valoare = 0, .column = start_column, .line = start_line};
     return token;
 }
+
+/*
+ * It's the same as it is with the function before, but 
+ * with the instrucions array 
+ */
 
 static Token scan_for_word(Lexer *lexer){
     size_t start_line = lexer->line;
@@ -128,6 +142,11 @@ static Token scan_for_number(Lexer *lexer){
     return token;
 }
 
+/*
+ * The function advances the cursor one character at a time. 
+ * It modifies the informative values and resets column on new line 
+ */
+
 static void advance(Lexer *lexer){
     char c = lexer->source_data[lexer->index];
     lexer->index++;
@@ -141,7 +160,6 @@ static void advance(Lexer *lexer){
 static void skip_comment(Lexer *lexer){
     while(lexer->source_data[lexer->index] != '\n' && lexer->source_data[lexer->index] != '\0') advance(lexer);
 }
-
 Token next_token(Lexer *lexer){
     while(1){
         char c = lexer->source_data[lexer->index];

@@ -1,19 +1,62 @@
 #include "assembler/assembler.h"
+#include "assembler/parser.h"
 #include "assembler/statement.h"
 #include "assembler/token.h"
+#include "isa/isa.h"
+#include <endian.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <sys/types.h>
 #ifndef MAX_MEM 
 #define MAX_MEM 65536
 #endif 
 
 
-//final 
-void assemblerInit(Assembler *assembler, Parser *parser, Lexer *lexer){
+/*
+ * Assembler own the memory of lexer, parser, the tables, sourceand buffer.data 
+ * Assmebler frees the heap allocated memory
+ * Assembler own the file and the caller doesn't have to call close 
+ */
+int assemblerInit(Assembler *assembler, FILE* file){
+    if(!assembler) return 0;
     *assembler = (Assembler){0};
-    assembler->parser = parser; 
-    assembler->lexer = lexer; 
-    
+    if(!file){
+	return 0;
+    }
+    int aux = fseek(file,0,SEEK_END);
+    if(aux!=0){
+	fclose(file);
+	return 0;
+    }
+    long file_size = ftell(file);
+    if(file_size == -1){
+	fclose(file);
+	return 0;
+    }
+    if(fseek(file,0,SEEK_SET)!=0){ //seek_set = start of the file 
+	fclose(file);
+	return 0;
+    }
+    assembler->source = malloc( file_size + 1);
+    if(!assembler->source){
+	fclose(file);
+	return 0;
+    }
+    size_t temp = fread(assembler->source,1,(size_t) file_size,file);
+    if(temp!=(size_t)file_size){
+	fclose(file);
+	return 0;
+    }
+    fclose(file);
+    assembler->source[file_size] = '\0'; 
+    assembler->lexer = malloc(sizeof(Lexer));
+    if(!assembler->lexer) return 0; 
+    lexer_init(assembler->lexer, assembler->source);
+    assembler->parser = malloc(sizeof(Parser));
+    if(!assembler->parser) return 0;
+    parser_init(assembler->parser, assembler->lexer);
+    return 1;    
 }
 //final 
 static Symbol* inSimTable(Assembler* assembler,String lname){
@@ -24,10 +67,8 @@ static Symbol* inSimTable(Assembler* assembler,String lname){
     return NULL;
 }
 
-
-//final 
 static int checkReserve(size_t size, ByteBuffer* buffer){
-    if(size > MAX_MEM - buffer->size) return 0; // adica nu mai ai memoroe 
+    if(buffer->size > MAX_MEM || size > MAX_MEM - buffer->size) return 0; // adica nu mai ai memoroe 
     if(buffer->size + size <= buffer->byteBufCap) return 1; 
     size_t capacity = buffer->byteBufCap ? buffer->byteBufCap : 16; 
     size_t required_memory = buffer->size + size; 
@@ -78,228 +119,189 @@ static int insertUnresolvedTable(UnresolvedSymbolTable* table, Symbol symbol){
     return 1;
 }
 
-//in constructie 
-// return = 0 => STOP 
+/*
+ * The function encodes the instruction. It firstly finds the icode 
+ * and then writes it with ifun. The second switch encodes the rest of 
+ * the instruction 
+ * Return 1 in case of succes 
+ */
+
 static int encodeInstruction(Assembler* assembler, Instruction* instruction){
-    Opcode opcode = instruction->opcode;
-    ByteBuffer* buffer = &assembler->buffer;//TO DO 
-      switch(opcode){//verifrica daca scrierea a fost facut cu succes!!!
-        case op_halt:
-	    writeByte(0x0, buffer);
+    Opcode op = instruction->opcode;
+    uint8_t instructionByte; 
+    ByteBuffer* buffer =&assembler->buffer;
+    int stop = 1 ;
+    switch(op){
+	case op_halt:
+   	    instructionByte = 0x00;
+	    break;
+	case op_nop:
+    	    instructionByte = 0x10;
+	    break;
+	case op_rrmov:
+  	    instructionByte = 0x20;
+	    break;
+	case op_irmov:
+  	    instructionByte = 0x30;
+	    break;
+	case op_rmmov:
+  	    instructionByte = 0x40;
+	    break;
+	case op_mrmov:
+  	    instructionByte = 0x50;
+	    break;
+	case op_add:
+    	    instructionByte = 0x60;
+	    break;
+	case op_sub:
+    	    instructionByte = 0x61;
+	    break;
+	case op_and:
+    	    instructionByte = 0x62;
+	    break;
+	case op_xor:
+    	    instructionByte = 0x63;
+	    break;
+	case op_jmp:
+    	    instructionByte = 0x70;
+	    break;
+	case op_jle:
+    	    instructionByte = 0x71;
+	    break;
+	case op_jl:
+     	    instructionByte = 0x72;
+	    break;
+	case op_je:
+     	    instructionByte = 0x73;
+	    break;
+	case op_jne:
+    	    instructionByte = 0x74;
+	    break;
+	case op_jge:
+    	    instructionByte = 0x75;
+	    break;
+	case op_jg:
+     	    instructionByte = 0x76;
+	    break;
+	case op_call:
+   	    instructionByte = 0x80;
+	    break;
+	case op_ret:
+    	    instructionByte = 0x90;
+	    break;
+	case op_push:
+   	    instructionByte = 0xa0;
+	    break;
+	case op_pop:
+    	    instructionByte = 0xb0;
+	    break;
+	case op_cmovle:
+ 	    instructionByte = 0xc0;
+	    break;
+	case op_cmovl:
+  	    instructionByte = 0xc1;
+	    break;
+	case op_cmove:
+  	    instructionByte = 0xc2;
+	    break;
+	case op_cmovne:
+ 	    instructionByte = 0xc3;
+	    break;
+	case op_cmovge:
+ 	    instructionByte = 0xc4;
+	    break;
+	case op_cmovg:
+  	    instructionByte = 0xc5;
+	    break;
+	default: 
+	    return 0;
+    }
+    uint8_t icode = instructionByte >> 4;
+    stop = writeByte(instructionByte,buffer);
+    if(!stop) return 0;
+    switch((icode_t)icode){
+	case HALT:
+	case NOP:
+	case RET:
             break;
-        case op_nop:
-	    writeByte(0x10,buffer);
-            break;
-        case op_rrmov:{
+	case RRMOVW:
+	case OPW: 
+	case CMOVXX:{
 	    uint8_t rA = instruction->srcA.reg;
 	    uint8_t rB = instruction->srcB.reg;
-	    writeByte(0x20,buffer);
-	    writeByte((rA << 4) | rB, buffer);
-            break;
+	    stop =writeByte((rA << 4) | rB, buffer);
+	    if(!stop) return 0;
+	    break;
 	}
-        case op_irmov:{ //conform parser srcA.immediate tine valoarea ce trebuie 
+	case IRMOVW:{ //conform parser srcA.immediate tine valoarea ce trebuie 
 		       //scrisa in memorie 
 	    uint16_t valoare = instruction->srcA.immediate;
 	    uint8_t rB = instruction->srcB.reg;
-	    writeByte(0x30,buffer);
-	    writeByte((0xf << 4) | rB, buffer);
-	    writeWord(valoare, buffer);
+	    stop = writeByte((0xf << 4) | rB, buffer);
+	    if(!stop) return 0;
+	    stop = writeWord(valoare, buffer);
+	    if(!stop) return 0; 
             break;
 	}
-        case op_rmmov:{
+	case RMMOVW:{
 	    uint8_t rA = instruction->srcA.reg;
 	    uint16_t offsetB = instruction->srcB.memory.offset;
 	    uint8_t bazaB = instruction->srcB.memory.baza;
-	    writeByte(0x40 , buffer); 
-	    writeByte((rA << 4) | bazaB, buffer);
-	    writeWord(offsetB, buffer);
+	    stop = writeByte((rA << 4) | bazaB, buffer);
+	    if(!stop) return 0;
+	    stop = writeWord(offsetB, buffer);
+	    if(!stop) return 0;
             break;
 	}
-        case op_mrmov:{
+	case MRMOVW:{ 
+			//rA    rB 
+	    // mrmovw d[%rax], %rsi 
 	    uint16_t offsetA = instruction->srcA.memory.offset;
 	    uint8_t bazaA = instruction->srcA.memory.baza;
 	    uint8_t rB = instruction->srcB.reg;
-	    writeByte(0x50, buffer);
-	    writeByte((bazaA << 4) | rB, buffer);
-	    writeWord(offsetA,buffer);
+	    stop = writeByte((bazaA << 4) | rB, buffer);
+	    if(!stop) return 0;
+	    stop = writeWord(offsetA,buffer);
+	    if(!stop) return 0;
             break;
 	}
-        case op_add:{
-	    uint8_t rA = instruction->srcA.reg;
-	    uint8_t rB = instruction->srcB.reg;
-	    writeByte(0x60,buffer);
-	    writeByte((rA << 4) | rB,buffer);
-            break;
-	}
-        case op_sub:{
-	    uint8_t rA = instruction->srcA.reg;
-	    uint8_t rB = instruction->srcB.reg;
-	    writeByte(0x61,buffer);
-	    writeByte((rA << 4) | rB,buffer);
-            break;
-	}
-        case op_and:{
-	    uint8_t rA = instruction->srcA.reg;
-	    uint8_t rB = instruction->srcB.reg;
-	    writeByte(0x62,buffer);
-	    writeByte((rA << 4) | rB,buffer);
-            break;
-	}
-        case op_xor:{
-	    uint8_t rA = instruction->srcA.reg;
-	    uint8_t rB = instruction->srcB.reg;
-	    writeByte(0x63,buffer);
-	    writeByte((rA << 4) | rB,buffer);
-            break;
-	}
-	case op_call:
-	case op_jmp:{
-	    writeByte((opcode == op_jmp? 0x70:0x80),buffer);
-	    if(instruction->srcB.type == operand_label){//pt documentatie: 
-	    //nu ne intereseaza symbtable acum (ci la final rezolvam tot. acum doar adaugam
-	    //toate labelurile in usymtab si revenim la el la final)
-	    //insertUnresolvedTable();
-		Symbol symbol = {.symbolName = instruction->srcB.label, .location = buffer->size};
-		if(!insertUnresolvedTable(&assembler->uSymbolTable,symbol)) return 0;	
-		writeWord(0x0000, buffer);
-	    }
-	    
-	    else writeWord(instruction->srcB.immediate,buffer);
-
-            break;
-	}
-        case op_jle:{
-	    writeByte(0x71,buffer);
+	/*
+	 * We check if the symbol (currently only labels) are called or defined
+	 * If there are only called but not defined we add them to 
+	 * UnresolvedSymbolTable 
+	 * Otherwise they are added to the symbol table 
+	 */
+	case JXX:
+	case CALL:{
 	    if(instruction->srcB.type == operand_label){
 		Symbol symbol = {.symbolName = instruction->srcB.label, .location = buffer->size};
 		if(!insertUnresolvedTable(&assembler->uSymbolTable,symbol)) return 0;	
-		writeWord(0x0000, buffer);
+		stop = writeWord(0x0000, buffer);
+		if(!stop) return 0;
 	    }
-	    else writeWord(instruction->srcB.immediate,buffer);
-            break;
-	}
-        case op_jl:{
-	    writeByte(0x72,buffer);
-	    if(instruction->srcB.type == operand_label){
-		Symbol symbol = {.symbolName = instruction->srcB.label, .location = buffer->size};
-		if(!insertUnresolvedTable(&assembler->uSymbolTable,symbol)) return 0;	
-		writeWord(0x0000, buffer);
+	    else{
+		stop = writeWord(instruction->srcB.immediate,buffer);
+		if(!stop) return 0;
 	    }
-	    else writeWord(instruction->srcB.immediate,buffer);
             break;
 	}
-            break;
-        case op_je:{
-	    writeByte(0x73,buffer);
-	    if(instruction->srcB.type == operand_label){
-		Symbol symbol = {.symbolName = instruction->srcB.label, .location = buffer->size};
-		if(!insertUnresolvedTable(&assembler->uSymbolTable,symbol)) return 0;	
-		writeWord(0x0000, buffer);
-	    }
-	    else writeWord(instruction->srcB.immediate,buffer);
-            break;
-	}
-            break;
-        case op_jne:{
-	    writeByte(0x74,buffer);
-	    if(instruction->srcB.type == operand_label){
-		Symbol symbol = {.symbolName = instruction->srcB.label, .location = buffer->size};
-		if(!insertUnresolvedTable(&assembler->uSymbolTable,symbol)) return 0;	
-		writeWord(0x0000, buffer);
-	    }
-	    else writeWord(instruction->srcB.immediate,buffer);
-            break;
-	}
-            break;
-        case op_jge:{
-	    writeByte(0x75,buffer);
-	    if(instruction->srcB.type == operand_label){
-		Symbol symbol = {.symbolName = instruction->srcB.label, .location = buffer->size};
-		if(!insertUnresolvedTable(&assembler->uSymbolTable,symbol)) return 0;	
-		writeWord(0x0000, buffer);
-	    }
-	    else writeWord(instruction->srcB.immediate,buffer);
-            break;
-	}
-            break;
-        case op_jg:{
-	    writeByte(0x76,buffer);
-	    if(instruction->srcB.type == operand_label){
-		Symbol symbol = {.symbolName = instruction->srcB.label, .location = buffer->size};
-		if(!insertUnresolvedTable(&assembler->uSymbolTable,symbol)) return 0;	
-		writeWord(0x0000, buffer);
-	    }
-	    else writeWord(instruction->srcB.immediate,buffer);
-            break;
-	}
-            break;
-        case op_cmovle:{
-	    uint8_t rA = instruction->srcA.reg;
-	    uint8_t rB = instruction->srcB.reg;
-	    writeByte(0xc0,buffer);
-	    writeByte((rA << 4) | rB, buffer);
-            break;
-	}
-        case op_cmovl:{
-	    uint8_t rA = instruction->srcA.reg;
-	    uint8_t rB = instruction->srcB.reg;
-	    writeByte(0xc1,buffer);
-	    writeByte((rA << 4) | rB, buffer);
-            break;
-	}
-            break;
-        case op_cmove:{
-	    uint8_t rA = instruction->srcA.reg;
-	    uint8_t rB = instruction->srcB.reg;
-	    writeByte(0xc2,buffer);
-	    writeByte((rA << 4) | rB, buffer);
-            break;
-	}
-            break;
-        case op_cmovne:{
-	    uint8_t rA = instruction->srcA.reg;
-	    uint8_t rB = instruction->srcB.reg;
-	    writeByte(0xc3,buffer);
-	    writeByte((rA << 4) | rB, buffer);
-            break;
-	}
-            break;
-        case op_cmovge:{
-	    uint8_t rA = instruction->srcA.reg;
-	    uint8_t rB = instruction->srcB.reg;
-	    writeByte(0xc4,buffer);
-	    writeByte((rA << 4) | rB, buffer);
-            break;
-	}
-            break;
-        case op_cmovg:{
-	    uint8_t rA = instruction->srcA.reg;
-	    uint8_t rB = instruction->srcB.reg;
-	    writeByte(0xc5,buffer);
-	    writeByte((rA << 4) | rB, buffer);
-            break;
-	}
-            break;
-        case op_ret:
-	    writeByte(0x90,buffer);
-            break;
-        case op_push:{
-	    writeByte(0xa0,buffer);
+	case PUSHW:{
 	    uint8_t regA = instruction->srcA.reg;
-	    writeByte((regA << 4) | 0xf, buffer);
+	    stop = writeByte((regA << 4) | 0xf, buffer);
+	    if(!stop) return 0;
             break;
 	}
-        case op_pop:{
-	    writeByte(0xb0,buffer);
+        case POPW:{
 	    uint8_t regB = instruction->srcB.reg;
-	    writeByte((regB<<4)| 0xf, buffer);
+	    stop = writeByte((regB<<4)| 0xf, buffer);
+	    if(!stop) return 0;
             break;
 	}
-        default:
-	    return 0;
-            break;
+     	default:
+	    stop = 0;
+	    break;
     }
-    return 1;
+    return stop; 
 }
 
 static int insertSymbolTable(SymbolTable* table, Symbol symbol){
@@ -313,20 +315,29 @@ static int insertSymbolTable(SymbolTable* table, Symbol symbol){
     table->symbols[table->size++] = symbol;
     return 1;
 }
-static int patchUnresolved(ByteBuffer* buffer, uint16_t location, uint16_t value){
+
+/*
+ * Inserts the new found address of the symbol (the resolved one) in the buffer
+ * at the specified address 
+ */
+
+static int patchUnresolved(ByteBuffer* buffer, size_t location, uint16_t value){
     if(location > buffer->size) return 0; 
     buffer->data[location] = value;
     buffer->data[location + 1 ] = value >> 8; 
     return 1; 
 }
 
+/*
+ * The function firstly iterates through the unresolved table and searches 
+ * it in the resolved one. If the unresolved symbol has been found it is then
+ * patched 
+ */
+
 static int resolveSymbols(Assembler* assembler){
-    //iteram prin symboltable si l cautam in unresolvedSim table: daca l gasim scriem la buffer.symbols[locatieUnresolvedSim] adresa simbolului 
-    //asta pentru fiecare intrare din tabel ca poate fi apelat de mai multe ori si sa nu stim de el 
-    for(size_t i = 0 ; i < assembler->uSymbolTable.size; i++){
+        for(size_t i = 0 ; i < assembler->uSymbolTable.size; i++){
 	String label_name = assembler->uSymbolTable.uSymbols[i].symbolName;
-	size_t unresolvedLocation = assembler->uSymbolTable.uSymbols[i].location; //ar trebui sa fie locul din buffer in care am doi octeti de zero ce trebuiesc 
-										  //suprascrisi   
+	size_t unresolvedLocation = assembler->uSymbolTable.uSymbols[i].location;
 	Symbol* foundSymbol = inSimTable(assembler,label_name);
 	//acum avem simbolul, deci numele si locatia acestuia din SYMBOL_TABLE
 	if(!foundSymbol) return 0; 
@@ -336,35 +347,29 @@ static int resolveSymbols(Assembler* assembler){
     return 1;
 }
 
-//static void resolveSimbols(Assembler* assembler, )
 int encode(Assembler* assembler){
     for(;;){
-    Statement statement = parse(assembler->parser);
-    switch(statement.type){
-	case st_instr:
-	    //poate fi apel la label: jmp ionel
-	    //poate sa fie sau nu intalnit pana atunci 
-		//il cautam in symbolTable. Daca e, atunci toate bune 
-		//altfel il punem in UnresolvedSymbolTable + locatia in care trebuie scrisa 
-		//adresa reala 
-		//putem verifica direct daca exista sau nu, deoarece n are cum sa fie declarat acum 
-	    if(!encodeInstruction(assembler, &statement.instr)) return 0;
-	    break;
-	case st_label:{ //forma label: (adica acum incep)
-		Symbol symbol = { .symbolName = statement.label, .location = assembler->buffer.size};
-		if(inSimTable(assembler,statement.label)){
-		    //duplicate label
-		    return 0;
-		}
-		if(!insertSymbolTable(&assembler->symbolTable,symbol)) return 0;
+	Statement statement = parse(assembler->parser);
+	switch(statement.type){
+	    case st_instr:
+		if(!encodeInstruction(assembler, &statement.instr)) return 0;
+		break;
+	    case st_label:{ //forma label: (adica acum incep)
+		    if(assembler->buffer.size >= MAX_MEM) return 0;
+		    Symbol symbol = { .symbolName = statement.label, .location = assembler->buffer.size};
+		    if(inSimTable(assembler,statement.label)){
+			//duplicate label
+			return 0;
+		    }
+		    if(!insertSymbolTable(&assembler->symbolTable,symbol)) return 0;
+		    break;
+	    }
+	    case st_eof:
+	       return resolveSymbols(assembler);
+	    default:
+		return 0;
 		break;
 	}
-	case st_eof:
-	   return resolveSymbols(assembler);
-	default:
-	    return 0;
-	    break;
-    }
     }
 }
 
@@ -372,6 +377,9 @@ void destroyAssembler(Assembler* assembler){
     free(assembler->buffer.data);
     free(assembler->uSymbolTable.uSymbols);
     free(assembler->symbolTable.symbols);
+    free(assembler->parser);
+    free(assembler->lexer);
+    free(assembler->source);
     *assembler = (Assembler){0};
 }
 

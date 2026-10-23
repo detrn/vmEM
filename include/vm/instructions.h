@@ -1,40 +1,12 @@
 #ifndef INSTRUCTIONS_H
 #define INSTRUCTIONS_H
 #include <stdint.h>
-typedef enum {
-    RAX=0x0, 
-    RCX=0x1, 
-    RDX=0x2, 
-    RBX= 0x3, 
-    RSP=0x4, 
-    RBP=0x5, 
-    RSI=0x6, 
-    RDI=0x7,
-    R8=0x8,
-    R9=0x9, 
-    R10=0xa, 
-    R11=0xb,
-    R12=0xc,
-    R13=0xd,
-    R14=0xe,
-    NO_REG=0xf
-} reg_id_t;
+#include "isa/isa.h"
 
-typedef enum{
-    HALT=0x0,
-    NOP=0x1,
-    RRMOVW=0x2,
-    IRMOVW=0x3,
-    RMMOVW=0x4,
-    MRMOVW=0x5,
-    OPW=0x6,
-    JXX=0x7,
-    CALL=0x8,
-    RET=0x9,
-    PUSHW=0xa,
-    POPW=0xb,
-    CMOVXX=0xc
-}icode_t;
+
+/*
+ * Possible function cases for opw 
+ */
 
 typedef enum{
     ADD=0,
@@ -53,15 +25,29 @@ typedef enum{
     jg
 }ifun_branches_t;
 
+/*
+ * Possible function cases for cmovxx 
+ */
+
 typedef enum {
-    RRMOV = 0,
-    CMOVLE,
+    CMOVLE = 1,
     CMOVL,
     CMOVE,
     CMOVNE,
     CMOVGE,
     CMOVG
 } ifun_moves_t;
+
+/*
+ * The instruction object represents the contract between the software ISA and 
+ * the simulated hardware
+ * icode is the first hexa digit and encodes the instruction name 
+ * ifun is the second hexa digit and encodes the function of the instruction (if there is the case --otherwise it's 0)
+ * rA:rB is the second byte of the instruction (each register is a hexa digit) 
+ * valC occupies the last second bytes and encodes. It encodes an immediate, offset or address
+ * valP it's the address of the program counter after incremeting it with the current encoding's size during the fetch 
+ * process 
+ */
 
 typedef struct{
     icode_t icode;
@@ -70,6 +56,6 @@ typedef struct{
     reg_id_t rB;
     uint16_t valC;
     uint16_t valP;
-}instruction_t;
+}Instruction;
 
 #endif
