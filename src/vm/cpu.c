@@ -66,7 +66,7 @@ static uint8_t valid_ifun(icode_t icode, uint8_t ifun){
             return ifun <= 3;
         case JXX:
         case CMOVXX:
-            return ifun <= 5;
+            return ifun <= 6;
 
         default:
             return 0;
@@ -387,7 +387,8 @@ static void cpu_execute(Cpu* cpu, Instruction* instruction,uint16_t*valA,uint16_
 }
 
 /*
- * Reads or writes into the memory 
+ *Performs the memory access stage of instruction execution. Reads data into valM or writes data to memory,
+ *depending on the instruction. Returns CPU_ADDR if the memory access fails
  */
 
 static cpu_status cpu_memory(Memory* memory, Instruction* instruction,uint16_t valA, uint16_t  *valE,uint16_t* valM){
@@ -424,57 +425,49 @@ static cpu_status cpu_memory(Memory* memory, Instruction* instruction,uint16_t v
 
 uint8_t validareMove(Cpu* cpu, Instruction* instruction){
     if(instruction->icode!=0xc) return 0;
-    switch(instruction->ifun){
-	case 0: //movle 
+    switch((ifun_moves_t)instruction->ifun){
+	case CMOVLE: //movle 
 	    return cpu->zero_flag || (cpu->sign_flag != cpu->overflow_flag);
-	    break;
-	case 1://movl 
+	case CMOVL://movl 
 	    return cpu->sign_flag!=cpu->overflow_flag;
-	    break;
-	case 2://move 
+	case CMOVE://move 
 	    return cpu->zero_flag; 
-	    break;
-	case 3://movne
+	case CMOVNE://movne
 	    return !cpu->zero_flag;
-	    break;
-	case 4://movge
+	case CMOVGE://movge
 	    return cpu->sign_flag == cpu->overflow_flag;
-	    break;
-	case 5://movg 
+	case CMOVG://movg 
 	    return !cpu->zero_flag && (cpu->sign_flag == cpu->overflow_flag);
-	    break;
 	default:
 	    return 0;
     }
 }
 uint8_t validareJMP(Cpu* cpu, Instruction* instruction){
     if(instruction->icode!=7) return 0; 
-    switch(instruction->ifun){
-	case 0:
+    switch((ifun_branches_t)instruction->ifun){
+	case jmp:
 	    return 1; 
-	    break;
-	case 1://jle
+	case jle://jle
 	    return (cpu->sign_flag !=cpu->overflow_flag) || cpu->zero_flag;
-	    break;
-	case 2://jl 
+	case jl://jl 
 	    return cpu->sign_flag!=cpu->overflow_flag; 
-	    break;
-	case 3://je 
+	case je ://je 
 	    return cpu->zero_flag;
-	    break;
-	case 4://jne
+	case jne://jne
 	    return !cpu->zero_flag;
-	    break;
-	case 5://jge
+	case jge ://jge
 	    return cpu->sign_flag == cpu->overflow_flag;
-	    break;
-	case 6://jg 
+	case jg ://jg 
 	    return !cpu->zero_flag && !(cpu->sign_flag ^ cpu->overflow_flag);
-	    break;
 	default:
 	    return 0;
     }
 }
+
+/*
+ * Writes the computed value in the destination register. In case of cmovxx it only does it 
+ * if the move condition is satisfied 
+ */
 
 static void cpu_writeback(Cpu* cpu, Instruction* instruction, uint16_t valE, uint16_t valM){
     switch(instruction->icode){
@@ -502,6 +495,13 @@ static void cpu_writeback(Cpu* cpu, Instruction* instruction, uint16_t valE, uin
 	    break;
     }
 }
+
+/*
+ * Updates the program counter. If the instruction doesn't require a jump in memory or 
+ * if it's condition wasn't satisfied the program counter will be assigned valP which is 
+ * the address of the next instruction. Otherwise, valC or valM will be used, where valC the
+ * target address or valM which is a memory address. 
+ */
 
 static void cpu_pc_update(Cpu* cpu, Instruction* instruction, uint16_t valM){
    switch(instruction->icode){

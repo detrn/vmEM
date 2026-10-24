@@ -1,9 +1,10 @@
 #ifndef DEBUG_H
 #define DEBUG_H
-
 #include "vm.h"
-#include "assembler/token.h"
-void debug_dump_all(const VM* vm);
-void debug_token(const Token* token);
+
+/*
+ * Prints the amount of steps the cpu has executed, pc, cpu's status, flags and changes of the registers or the memory 
+ */
+void debug_dump_all(VM* vm);
 
 #endif 

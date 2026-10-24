@@ -13,11 +13,7 @@
 #endif 
 
 
-/*
- * Assembler own the memory of lexer, parser, the tables, sourceand buffer.data 
- * Assmebler frees the heap allocated memory
- * Assembler own the file and the caller doesn't have to call close 
- */
+
 int assemblerInit(Assembler *assembler, FILE* file){
     if(!assembler) return 0;
     *assembler = (Assembler){0};

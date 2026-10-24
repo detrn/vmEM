@@ -62,14 +62,19 @@ typedef struct{
 }Assembler;
 
 /*
- * Initializez the assembler. ByteBuffer doest not yet contain allocated memory. 
- * Parser and lexer must be initialized
+ * Assembler owns the memory of lexer, parser, the tables, source and buffer.data 
+ * Assmebler frees the heap allocated memory
+ * Assembler owns the file and the caller doesn't have to call close on it
+ * It returns 1 on succes and 0 on failure. In case of an error the caller must call 
+ * destroyAssembler in order to free the memory 
+ * The sym tables are malloced in their own static functions 
+ * File is the source file from which the assembler will read it's contents
  */
 
 int assemblerInit(Assembler* assembler, FILE* file);
 
 /*
- * Frees the symbol tables and the bytebuffer
+ * Frees the symbol tables, buffer.data, parser, lexer and the source 
  */
 
 void destroyAssembler(Assembler* assembler);

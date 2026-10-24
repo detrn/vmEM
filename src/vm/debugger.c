@@ -2,6 +2,7 @@
 #include "vm/vm.h"
 #include <stdint.h>
 #include <stdio.h>
+#include "vm/debug.h"
 
 static const char *register_names[15] = {
     "rax", "rcx", "rdx", "rbx",
