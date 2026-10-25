@@ -1,0 +1,17 @@
+IRMOVW $0, %RAX
+IRMOVW $1, %RBX
+IRMOVW $10, %RCX
+IRMOVW $1, %RDX
+
+LOOP:
+    RRMOVW %RBX, %RSI
+    ADDW %RAX, %RSI
+    RRMOVW %RBX, %RAX
+    RRMOVW %RSI, %RBX
+
+    SUBW %RDX, %RCX
+    JG LOOP
+
+HALT
+
+; %RAX hold the result (0x0078)

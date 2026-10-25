@@ -226,7 +226,9 @@ static int encodeInstruction(Assembler* assembler, Instruction* instruction){
 	    uint8_t rA = instruction->srcA.reg;
 	    uint8_t rB = instruction->srcB.reg;
 	    stop =writeByte((uint8_t)((rA << 4) | rB), buffer);
-	    if(!stop) return 0;
+	    if(!stop){ 
+	    	return 0;
+	    }
 	    break;
 	}
 	case IRMOVW:{ //conform parser srcA.immediate tine valoarea ce trebuie 
@@ -348,16 +350,23 @@ int encode(Assembler* assembler){
 	Statement statement = parse(assembler->parser);
 	switch(statement.type){
 	    case st_instr:
-		if(!encodeInstruction(assembler, &statement.instr)) return 0;
+		if(!encodeInstruction(assembler, &statement.instr)){
+		    printf("Error at statement: %d\n",statement.type);  
+		    return 0;
+		}
 		break;
 	    case st_label:{ //forma label: (adica acum incep)
 		    if(assembler->buffer.size >= MAX_MEM) return 0;
 		    Symbol symbol = { .symbolName = statement.label, .location = assembler->buffer.size};
 		    if(inSimTable(assembler,statement.label)){
+			printf("Duplicate label error\n");
 			//duplicate label
 			return 0;
 		    }
-		    if(!insertSymbolTable(&assembler->symbolTable,symbol)) return 0;
+		    if(!insertSymbolTable(&assembler->symbolTable,symbol)){
+			printf("Error at inserting the label into the table\n");
+			return 0;
+		    }
 		    break;
 	    }
 	    case st_eof:

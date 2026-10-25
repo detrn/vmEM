@@ -41,7 +41,7 @@ void lexer_init(Lexer *lexer, const char *source){
  * the enum ones
  */
 const char *instructions[INSTRUCTION_NUMBER] = {
-    "HALT", "NOP", "RRMOVW", "IRMOVW", "RMMOVW", "MRMOVW", "ADD",
+    "HALT", "NOP", "RRMOVW", "IRMOVW", "RMMOVW", "MRMOVW", "ADDW",
     "SUBW", "ANDW", "XORW", "JMP", "JLE", "JL", "JE", "JNE", "JGE", "JG","CMOVLE","CMOVL","CMOVE","CMOVNE","CMOVGE","CMOVG","CALL","RET","PUSHW","POPW"
 };
 

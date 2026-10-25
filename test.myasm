@@ -1,5 +1,0 @@
-NOP
-JMP start
-HALT
-start: 
-HALT

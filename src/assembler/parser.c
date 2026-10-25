@@ -268,7 +268,7 @@ static void print_statement(const Statement* statement){
 	     * doar o data ca sa nu mai fie dezordonate si peste tot aceleasi date 
 	     * Posibile erori 
 	     */
-	    const char *instructions[INSTRUCTION_NUMBER] = { "HALT", "NOP", "RRMOVW", "IRMOVW", "RMMOVW", "MRMOVW", "ADD", "SUBW", "ANDW", "XORW", "JMP", "JLE", "JL", "JE", "JNE", "JGE", "JG","CMOVLE","CMOVL","CMOVE","CMOVNE","CMOVGE","CMOVG","CALL","RET","PUSHW","POPW"};
+	    const char *instructions[INSTRUCTION_NUMBER] = { "HALT", "NOP", "RRMOVW", "IRMOVW", "RMMOVW", "MRMOVW", "ADDW", "SUBW", "ANDW", "XORW", "JMP", "JLE", "JL", "JE", "JNE", "JGE", "JG","CMOVLE","CMOVL","CMOVE","CMOVNE","CMOVGE","CMOVG","CALL","RET","PUSHW","POPW"};
 	    printf("Instructiune:%s\n",instructions[statement->instr.opcode]);
 	    print_operand(&statement->instr.srcA);
 	    print_operand(&statement->instr.srcB);
