@@ -30,7 +30,7 @@ typedef enum{
  */
 
 typedef enum {
-    CMOVLE = 1,
+    CMOVLE = 0,
     CMOVL,
     CMOVE,
     CMOVNE,

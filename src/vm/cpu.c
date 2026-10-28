@@ -66,7 +66,7 @@ static uint8_t valid_ifun(icode_t icode, uint8_t ifun){
             return ifun <= 3;
         case JXX:
         case CMOVXX:
-            return ifun <= 6;
+            return ifun <= 5;
 
         default:
             return 0;
