@@ -14,4 +14,3 @@ LOOP:
 
 HALT
 
-; %RAX hold the result (0x0078)
